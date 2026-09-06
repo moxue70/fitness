@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>70后陌雪 · 健身打卡</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;background:#FFF8F5;color:#333;min-height:100vh;padding-bottom:40px}
+.page{display:none}
+.page.active{display:block}
+/* 顶部 */
+.header{background:linear-gradient(135deg,#FF8A80,#FF6B6B);color:#fff;padding:28px 20px 24px;border-radius:0 0 24px 24px;box-shadow:0 4px 20px rgba(255,107,107,.3)}
+.header h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.header .sub{font-size:14px;opacity:.9}
+.container{padding:16px}
+/* 返回按钮 */
+.back-bar{display:flex;align-items:center;padding:14px 16px;gap:10px}
+.back-btn{background:#fff;border:none;border-radius:12px;padding:8px 16px;font-size:15px;font-weight:600;color:#FF6B6B;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer}
+.back-bar .title{font-size:18px;font-weight:700;color:#333}
+/* 首页月份卡片 */
+.month-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.month-card{background:#fff;border-radius:18px;padding:18px 16px;box-shadow:0 2px 12px rgba(0,0,0,.06);cursor:pointer;position:relative;overflow:hidden}
+.month-card.ready:active{transform:scale(.97)}
+.month-card.pending{opacity:.6;cursor:not-allowed}
+.month-card .month-name{font-size:18px;font-weight:700;color:#333;margin-bottom:4px}
+.month-card .month-sub{font-size:12px;color:#888;margin-bottom:10px}
+.month-card .progress{font-size:13px;color:#FF6B6B;font-weight:600}
+.month-card .progress-bar{height:6px;background:#F0F0F0;border-radius:3px;margin-top:8px;overflow:hidden}
+.month-card .progress-fill{height:100%;background:linear-gradient(90deg,#FF8A80,#FF6B6B);border-radius:3px;transition:width .3s}
+.month-card .badge{position:absolute;top:12px;right:12px;font-size:11px;padding:3px 8px;border-radius:10px;font-weight:600}
+.badge.ready{background:#E8F5E9;color:#43A047}
+.badge.pending{background:#F5F5F5;color:#999}
+.badge.current{background:#FFF0EE;color:#FF6B6B}
+/* 历史入口 */
+.history-entry{background:linear-gradient(135deg,#7C4DFF,#B388FF);color:#fff;border-radius:18px;padding:20px;box-shadow:0 4px 16px rgba(124,77,255,.3);cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.history-entry:active{transform:scale(.98)}
+.history-entry .he-title{font-size:17px;font-weight:700}
+.history-entry .he-sub{font-size:13px;opacity:.85;margin-top:4px}
+.history-entry .he-arrow{font-size:24px}
+/* 今日卡片 */
+.today-card{background:#fff;border-radius:20px;padding:22px;box-shadow:0 2px 16px rgba(0,0,0,.06);margin-bottom:16px}
+.today-card .date-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.today-card .date-text{font-size:16px;color:#666}
+.today-card .week-tag{font-size:13px;background:#FFF0EE;color:#FF6B6B;padding:4px 12px;border-radius:20px;font-weight:600}
+.today-card .type-badge{display:inline-flex;align-items:center;gap:6px;font-size:20px;font-weight:700;margin-bottom:10px}
+.type-badge.home{color:#FF6B6B}
+.type-badge.jazz{color:#7C4DFF}
+.type-badge.rest{color:#999}
+.today-card .content{font-size:15px;color:#555;line-height:1.7;margin-bottom:8px}
+.today-card .duration{font-size:14px;color:#888;background:#F9F9F9;padding:8px 14px;border-radius:10px;display:inline-block}
+.today-card .tip{font-size:13px;color:#FF8A80;margin-top:10px;line-height:1.5}
+/* 打卡按钮 */
+.checkin-btn{width:100%;background:linear-gradient(135deg,#FF8A80,#FF6B6B);color:#fff;border:none;border-radius:16px;padding:18px;font-size:19px;font-weight:700;box-shadow:0 4px 16px rgba(255,107,107,.35);margin-bottom:16px;cursor:pointer}
+.checkin-btn.done{background:linear-gradient(135deg,#81C784,#66BB6A);box-shadow:0 4px 16px rgba(102,187,106,.3)}
+.checkin-btn.rest-btn{background:linear-gradient(135deg,#BDBDBD,#9E9E9E);box-shadow:0 4px 16px rgba(158,158,158,.3)}
+/* 统计 */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:16px;padding:16px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+.stat-card .num{font-size:28px;font-weight:700;color:#FF6B6B}
+.stat-card .label{font-size:13px;color:#888;margin-top:4px}
+.stat-card:nth-child(2) .num{color:#7C4DFF}
+.stat-card:nth-child(3) .num{color:#FFA726}
+.stat-card:nth-child(4) .num{color:#66BB6A}
+/* 日历 */
+.calendar-section{background:#fff;border-radius:20px;padding:18px;box-shadow:0 2px 16px rgba(0,0,0,.06);margin-bottom:16px}
+.calendar-section h3{font-size:17px;margin-bottom:14px;color:#333}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;color:#999;margin-bottom:8px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;font-size:14px;position:relative;cursor:pointer}
+.cal-day .d{font-weight:600}
+.cal-day .icon{font-size:10px;margin-top:1px}
+.cal-day.empty{background:transparent}
+.cal-day.rest{background:#F5F5F5;color:#AAA}
+.cal-day.home{background:#FFF0EE;color:#FF6B6B}
+.cal-day.jazz{background:#F3EFFF;color:#7C4DFF}
+.cal-day.checked{background:#E8F5E9;color:#43A047}
+.cal-day.today{border:2.5px solid #FF6B6B}
+.cal-day.past{opacity:.45}
+.cal-legend{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;font-size:12px;color:#888}
+.cal-legend span{display:flex;align-items:center;gap:4px}
+.legend-dot{width:12px;height:12px;border-radius:4px;display:inline-block}
+/* 变化记录 */
+.timeline-section{background:#fff;border-radius:20px;padding:18px;box-shadow:0 2px 16px rgba(0,0,0,.06);margin-bottom:16px}
+.timeline-section h3{font-size:17px;margin-bottom:14px;color:#333}
+.timeline-empty{text-align:center;color:#BBB;padding:30px 0;font-size:14px}
+.timeline-item{border-left:3px solid #FFCCBC;padding:0 0 18px 16px;position:relative}
+.timeline-item:last-child{border-left-color:transparent;padding-bottom:0}
+.timeline-item::before{content:'';position:absolute;left:-7px;top:2px;width:11px;height:11px;border-radius:50%;background:#FF6B6B}
+.timeline-item .tl-date{font-size:14px;font-weight:700;color:#333;margin-bottom:2px}
+.timeline-item .tl-month{font-size:11px;color:#FF6B6B;margin-bottom:4px}
+.timeline-item .tl-type{font-size:12px;color:#888;margin-bottom:6px}
+.timeline-item .tl-feeling{font-size:14px;color:#555;line-height:1.6;margin-bottom:8px}
+.timeline-item .tl-img{width:100%;border-radius:12px;margin-top:6px;max-height:200px;object-fit:cover}
+.timeline-item .tl-video{font-size:13px;color:#7C4DFF;background:#F3EFFF;padding:8px 12px;border-radius:8px;margin-top:6px}
+/* 筛选 */
+.filter-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px}
+.filter-chip{border:2px solid #EEE;background:#fff;border-radius:20px;padding:6px 14px;font-size:13px;color:#666;white-space:nowrap;cursor:pointer;flex-shrink:0}
+.filter-chip.active{border-color:#FF6B6B;background:#FFF0EE;color:#FF6B6B;font-weight:600}
+/* 弹窗 */
+.modal-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal-mask.show{display:flex}
+.modal{background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:24px 20px 30px;max-height:85vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h3{font-size:19px;margin-bottom:18px;color:#333}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:15px;font-weight:600;color:#444;margin-bottom:8px}
+.form-group textarea{width:100%;border:2px solid #EEE;border-radius:12px;padding:12px;font-size:15px;min-height:80px;resize:none;font-family:inherit}
+.form-group textarea:focus{border-color:#FF6B6B;outline:none}
+.feeling-quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.feeling-quick button{border:2px solid #EEE;background:#fff;border-radius:20px;padding:6px 14px;font-size:13px;color:#666;cursor:pointer}
+.feeling-quick button.active{border-color:#FF6B6B;background:#FFF0EE;color:#FF6B6B}
+.upload-area{border:2px dashed #DDD;border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:#FAFAFA}
+.upload-area:active{background:#F0F0F0}
+.upload-area .up-icon{font-size:32px;margin-bottom:6px}
+.upload-area .up-text{font-size:13px;color:#888}
+.img-preview{position:relative;margin-top:10px}
+.img-preview img{width:100%;border-radius:12px;max-height:180px;object-fit:cover}
+.img-preview .remove-img{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border:none;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer}
+.video-input{width:100%;border:2px solid #EEE;border-radius:12px;padding:12px;font-size:14px;font-family:inherit}
+.video-input:focus{border-color:#7C4DFF;outline:none}
+.modal-actions{display:flex;gap:12px;margin-top:20px}
+.modal-actions button{flex:1;padding:15px;border-radius:14px;font-size:16px;font-weight:700;border:none;cursor:pointer}
+.btn-cancel{background:#F0F0F0;color:#666}
+.btn-save{background:linear-gradient(135deg,#FF8A80,#FF6B6B);color:#fff}
+.footer-tip{text-align:center;font-size:12px;color:#CCC;margin-top:20px;padding:0 20px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- ========== 首页：月份选择 ========== -->
+<div id="page-home" class="page active">
+  <div class="header">
+    <h1>70后陌雪 · 健身打卡</h1>
+    <div class="sub">慢慢来，不攀比，好好爱护身体 💪</div>
+  </div>
+  <div class="container">
+    <div class="month-grid" id="monthGrid"></div>
+    <div class="history-entry" onclick="showPage('history')">
+      <div>
+        <div class="he-title">📜 我的变化记录</div>
+        <div class="he-sub">查看所有月份的打卡历史，见证自己的进步</div>
+      </div>
+      <div class="he-arrow">›</div>
+    </div>
+    <div class="footer-tip">数据保存在本机浏览器，清理缓存会丢失<br>建议定期导出备份</div>
+  </div>
+</div>
+
+<!-- ========== 月度打卡页 ========== -->
+<div id="page-month" class="page">
+  <div class="back-bar">
+    <button class="back-btn" onclick="showPage('home')">‹ 返回</button>
+    <span class="title" id="monthTitle">月度打卡</span>
+  </div>
+  <div class="container">
+    <div class="today-card" id="todayCard"></div>
+    <button class="checkin-btn" id="checkinBtn" onclick="openModal()">今日打卡</button>
+    <div class="stats">
+      <div class="stat-card"><div class="num" id="statTotal">0</div><div class="label">本月完成</div></div>
+      <div class="stat-card"><div class="num" id="statStreak">0</div><div class="label">连续打卡</div></div>
+      <div class="stat-card"><div class="num" id="statHome">0</div><div class="label">居家训练</div></div>
+      <div class="stat-card"><div class="num" id="statJazz">0</div><div class="label">爵士舞课</div></div>
+    </div>
+    <div class="calendar-section">
+      <h3 id="calTitle">训练日历</h3>
+      <div class="cal-header"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend">
+        <span><i class="legend-dot" style="background:#FFF0EE"></i>居家</span>
+        <span><i class="legend-dot" style="background:#F3EFFF"></i>爵士舞</span>
+        <span><i class="legend-dot" style="background:#F5F5F5"></i>休息</span>
+        <span><i class="legend-dot" style="background:#E8F5E9"></i>已打卡</span>
+      </div>
+    </div>
+    <div class="timeline-section">
+      <h3>📝 本月变化记录</h3>
+      <div id="timelineList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 历史记录页 ========== -->
+<div id="page-history" class="page">
+  <div class="back-bar">
+    <button class="back-btn" onclick="showPage('home')">‹ 返回</button>
+    <span class="title">我的变化记录</span>
+  </div>
+  <div class="container">
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="timeline-section">
+      <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 打卡弹窗 ========== -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <h3 id="modalTitle">今日打卡</h3>
+    <div class="form-group">
+      <label>今天练得怎么样？</label>
+      <div class="feeling-quick" id="feelingQuick">
+        <button onclick="setFeeling(this,'微微出汗，很舒服')">微微出汗</button>
+        <button onclick="setFeeling(this,'有点累但能坚持')">有点累</button>
+        <button onclick="setFeeling(this,'状态不错，有进步')">状态不错</button>
+        <button onclick="setFeeling(this,'腿软，减量了')">腿软减量</button>
+      </div>
+      <textarea id="feelingInput" placeholder="写点今天的感受，比如哪里酸、哪里有进步、心情怎么样……"></textarea>
+    </div>
+    <div class="form-group">
+      <label>📷 拍张照片记录（可选）</label>
+      <div class="upload-area" onclick="document.getElementById('imgInput').click()">
+        <div class="up-icon">📸</div>
+        <div class="up-text">点击拍照或从相册选择</div>
+      </div>
+      <input type="file" id="imgInput" accept="image/*" style="display:none" onchange="handleImg(event)">
+      <div class="img-preview" id="imgPreview" style="display:none">
+        <img id="previewImg" src="">
+        <button class="remove-img" onclick="removeImg()">×</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>🎬 训练视频记录（可选）</label>
+      <input type="text" class="video-input" id="videoNote" placeholder="视频保存在相册，在这里写个备注，比如：第3次跟练，动作比上次协调了">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" onclick="saveCheckin()">完成打卡 ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 所有月份的训练计划数据 ====================
+const PLANS = {
+  "2026-09": {
+    year:2026, month:9, status:"ready",
+    days:{
+      "1":{type:"home",week:"预热",duration:"30分钟",content:"热身10分钟 + 胜利塑形跟练（减半强度）+ 拉伸5分钟"},
+      "2":{type:"rest"},"3":{type:"home",week:"预热",duration:"30分钟",content:"热身10分钟 + 胜利塑形跟练（减半强度）+ 拉伸5分钟"},
+      "4":{type:"rest"},"5":{type:"home",week:"预热",duration:"30-40分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸5-10分钟"},
+      "6":{type:"rest"},"7":{type:"home",week:"第1周",duration:"30-40分钟",content:"热身10分钟 + 抖音胜利塑形直播跟练 + 拉伸5-10分钟。跳跃动作改成原地踏步，不蹲太深。"},
+      "8":{type:"home",week:"第1周",duration:"30-40分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。累了就随时停，不硬撑。"},
+      "9":{type:"rest"},"10":{type:"home",week:"第1周",duration:"30-40分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。关注呼吸，不憋气。"},
+      "11":{type:"rest"},"12":{type:"home",week:"第1周",duration:"30-40分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。本周目标：练完不影响第二天精神。"},
+      "13":{type:"rest"},"14":{type:"home",week:"第2周",duration:"40-50分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。可以尝试跟满直播的一半以上。"},
+      "15":{type:"home",week:"第2周",duration:"40-50分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "16":{type:"rest"},"17":{type:"home",week:"第2周",duration:"40-50分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "18":{type:"rest"},"19":{type:"home",week:"第2周",duration:"40-50分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。本周目标：练完微微出汗，第二天正常。"},
+      "20":{type:"rest"},"21":{type:"home",week:"第3周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练（尽量跟满）+ 拉伸10分钟。"},
+      "22":{type:"home",week:"第3周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "23":{type:"rest"},"24":{type:"home",week:"第3周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "25":{type:"rest"},"26":{type:"jazz",week:"第3周",duration:"75分钟",content:"爵士舞课（第1次体验）！课前充分热身，课中累了就站边上休息，不硬跟年轻同学。课后回家直接休息，不再加练。"},
+      "27":{type:"rest"},"28":{type:"home",week:"第4周",duration:"60分钟",content:"热身10分钟 + 胜利塑形跟练（跟满1小时）+ 拉伸10分钟。如果上周爵士课后疲惫超过2天，本周减回40分钟。"},
+      "29":{type:"home",week:"第4周",duration:"60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "30":{type:"rest"}
+    }
+  },
+  "2026-10": {
+    year:2026, month:10, status:"ready",
+    days:{
+      "1":{type:"home",week:"第5周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸10分钟。国庆假期也别完全停，保持节奏。"},
+      "2":{type:"rest"},"3":{type:"jazz",week:"第5周",duration:"75分钟",content:"爵士舞课。课前热身，课中量力而行，课后不加练，好好恢复。"},
+      "4":{type:"rest"},"5":{type:"home",week:"第6周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "6":{type:"home",week:"第6周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "7":{type:"rest"},"8":{type:"home",week:"第6周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "9":{type:"rest"},"10":{type:"jazz",week:"第6周",duration:"75分钟",content:"爵士舞课。注意课后恢复，如果连续两次课后疲惫超过2天，告诉助手调整计划。"},
+      "11":{type:"rest"},"12":{type:"home",week:"第7周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "13":{type:"home",week:"第7周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "14":{type:"rest"},"15":{type:"home",week:"第7周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "16":{type:"rest"},"17":{type:"jazz",week:"第7周",duration:"75分钟",content:"爵士舞课。"},
+      "18":{type:"rest"},"19":{type:"home",week:"第8周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。本周目标：居家跟满1小时不费劲。"},
+      "20":{type:"home",week:"第8周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "21":{type:"rest"},"22":{type:"home",week:"第8周",duration:"50-60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "23":{type:"rest"},"24":{type:"jazz",week:"第8周",duration:"75分钟",content:"爵士舞课。"},
+      "25":{type:"rest"},"26":{type:"home",week:"第9周",duration:"60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸10分钟。本周起进入混合期，每周2次居家+2次爵士。"},
+      "27":{type:"jazz",week:"第9周",duration:"75分钟",content:"爵士舞课（周二加课）。混合期开始，每周2次爵士舞。"},
+      "28":{type:"rest"},"29":{type:"home",week:"第9周",duration:"60分钟",content:"热身10分钟 + 胜利塑形跟练 + 拉伸。"},
+      "30":{type:"rest"},"31":{type:"jazz",week:"第9周",duration:"75分钟",content:"爵士舞课。"}
+    }
+  },
+  "2026-11": {year:2026, month:11, status:"pending"},
+  "2026-12": {year:2026, month:12, status:"pending"},
+  "2027-01": {year:2027, month:1, status:"pending"}
+};
+
+// ==================== 全局状态 ====================
+let currentMonthKey = null;
+let currentImgData = null;
+let historyFilter = "all";
+
+function storageKey(monthKey){ return "moxue_fitness_" + monthKey.replace("-","_"); }
+function loadMonthData(monthKey){
+  try{ const raw = localStorage.getItem(storageKey(monthKey)); return raw ? JSON.parse(raw) : {}; }
+  catch(e){ return {}; }
+}
+function saveMonthData(monthKey, data){
+  localStorage.setItem(storageKey(monthKey), JSON.stringify(data));
+}
+function getToday(){
+  const now = new Date();
+  return {y:now.getFullYear(), m:now.getMonth()+1, d:now.getDate()};
+}
+function getCurrentMonthKey(){
+  const t = getToday();
+  return t.y + "-" + String(t.m).padStart(2,"0");
+}
+
+// ==================== 页面切换 ====================
+function showPage(pageId){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("page-"+pageId).classList.add("active");
+  window.scrollTo(0,0);
+  if(pageId==="home") renderHome();
+  if(pageId==="history") renderHistory();
+}
+
+function openMonth(monthKey){
+  const plan = PLANS[monthKey];
+  if(!plan || plan.status!=="ready") return;
+  currentMonthKey = monthKey;
+  document.getElementById("monthTitle").textContent = plan.year + "年" + plan.month + "月";
+  document.getElementById("calTitle").textContent = plan.year + "年" + plan.month + "月训练日历";
+  showPage("month");
+  renderMonth();
+}
+
+// ==================== 首页渲染 ====================
+function renderHome(){
+  const grid = document.getElementById("monthGrid");
+  const today = getToday();
+  const currentKey = getCurrentMonthKey();
+  let html = "";
+  for(const key in PLANS){
+    const plan = PLANS[key];
+    const data = loadMonthData(key);
+    let doneCount = 0, totalCount = 0;
+    if(plan.days){
+      for(const d in plan.days){
+        if(plan.days[d].type!=="rest") totalCount++;
+        if(data[d]) doneCount++;
+      }
+    }
+    const isCurrent = (key===currentKey);
+    const badgeClass = isCurrent ? "current" : plan.status;
+    const badgeText = isCurrent ? "本月" : (plan.status==="ready" ? "已生成" : "待生成");
+    const progress = totalCount>0 ? Math.round(doneCount/totalCount*100) : 0;
+    html += `<div class="month-card ${plan.status}" onclick="${plan.status==='ready'?`openMonth('${key}')`:""}">
+      <span class="badge ${badgeClass}">${badgeText}</span>
+      <div class="month-name">${plan.year}年${plan.month}月</div>
+      <div class="month-sub">${plan.status==="ready"?"每周4练3休":"助手生成中…"}</div>
+      ${plan.status==="ready"?`<div class="progress">已打卡 ${doneCount}/${totalCount} 次</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>`:""}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// ==================== 月度页面渲染 ====================
+function renderMonth(){
+  renderToday();
+  renderCalendar();
+  renderStats();
+  renderTimeline();
+}
+
+function renderToday(){
+  const plan = PLANS[currentMonthKey];
+  const today = getToday();
+  const card = document.getElementById("todayCard");
+  const btn = document.getElementById("checkinBtn");
+  const weekNames = ["周日","周一","周二","周三","周四","周五","周六"];
+  const weekDay = weekNames[new Date().getDay()];
+  const data = loadMonthData(currentMonthKey);
+
+  const inMonth = (today.y===plan.year && today.m===plan.month);
+  if(!inMonth){
+    const nearestDay = Object.keys(plan.days).sort((a,b)=>a-b)[0];
+    card.innerHTML = `<div class="date-row"><span class="date-text">${plan.year}年${plan.month}月</span><span class="week-tag">历史月份</span></div>
+      <div class="type-badge rest">📌 查看${plan.month}月记录</div>
+      <div class="content">当前不是${plan.month}月，你可以查看本月的打卡记录和训练计划。今天是${today.m}月${today.d}日。</div>`;
+    btn.style.display = "none";
+    return;
+  }
+  btn.style.display = "block";
+
+  const dayInfo = plan.days[String(today.d)];
+  const checked = data[String(today.d)];
+  let typeHtml="", contentHtml="", tipHtml="";
+
+  if(dayInfo.type==="home"){
+    typeHtml=`<div class="type-badge home">🏠 今日居家训练</div>`;
+    contentHtml=`<div class="content">${dayInfo.content}</div><div class="duration">⏱ 建议时长：${dayInfo.duration}</div>`;
+    tipHtml=`<div class="tip">💡 ${dayInfo.week} · 19:00-20:00 抖音胜利塑形直播跟练</div>`;
+  }else if(dayInfo.type==="jazz"){
+    typeHtml=`<div class="type-badge jazz">💃 今日爵士舞课</div>`;
+    contentHtml=`<div class="content">${dayInfo.content}</div><div class="duration">⏱ 课程时长：${dayInfo.duration}</div>`;
+    tipHtml=`<div class="tip">💡 ${dayInfo.week} · 课后好好休息，不额外加练</div>`;
+  }else{
+    typeHtml=`<div class="type-badge rest">☕ 今日休息</div>`;
+    contentHtml=`<div class="content">今天不训练，好好放松。可以约会、处理自媒体工作、或者纯粹躺平休息。<br>休息也是健身的一部分，不是偷懒！</div>`;
+  }
+
+  card.innerHTML=`<div class="date-row"><span class="date-text">${today.m}月${today.d}日 ${weekDay}</span><span class="week-tag">${dayInfo.week||"休息日"}</span></div>${typeHtml}${contentHtml}${tipHtml}`;
+
+  if(checked){
+    btn.className="checkin-btn done";
+    btn.textContent="✓ 今日已打卡（点我修改）";
+  }else if(dayInfo.type==="rest"){
+    btn.className="checkin-btn rest-btn";
+    btn.textContent="今日休息 · 也可以记一笔";
+  }else{
+    btn.className="checkin-btn";
+    btn.textContent="今日打卡";
+  }
+}
+
+function renderCalendar(){
+  const plan = PLANS[currentMonthKey];
+  const data = loadMonthData(currentMonthKey);
+  const grid = document.getElementById("calGrid");
+  const firstDay = new Date(plan.year, plan.month-1, 1).getDay();
+  const daysInMonth = new Date(plan.year, plan.month, 0).getDate();
+  const today = getToday();
+  let html="";
+  for(let i=0;i<firstDay;i++) html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const info = plan.days[String(d)];
+    const checked = data[String(d)];
+    let cls="cal-day ", icon="";
+    if(checked){cls+="checked";icon="✓";}
+    else if(info && info.type==="home"){cls+="home";icon="🏠";}
+    else if(info && info.type==="jazz"){cls+="jazz";icon="💃";}
+    else{cls+="rest";icon="☕";}
+    const isToday = (today.y===plan.year && today.m===plan.month && today.d===d);
+    const isPast = (today.y>plan.year || (today.y===plan.year && today.m>plan.month) || (today.y===plan.year && today.m===plan.month && d<today.d));
+    if(isToday) cls+=" today";
+    if(isPast) cls+=" past";
+    html+=`<div class="${cls}" onclick="dayClick(${d})"><span class="d">${d}</span><span class="icon">${icon}</span></div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function dayClick(d){
+  const plan = PLANS[currentMonthKey];
+  const data = loadMonthData(currentMonthKey);
+  const info = plan.days[String(d)];
+  const checked = data[String(d)];
+  let msg=`${plan.year}年${plan.month}月${d}日\n`;
+  if(info && info.type==="home") msg+="🏠 居家训练\n"+info.content+"\n⏱ "+info.duration;
+  else if(info && info.type==="jazz") msg+="💃 爵士舞课\n"+info.content;
+  else msg+="☕ 休息日";
+  if(checked){ msg+="\n\n✅ 已打卡\n感受："+(checked.feeling||"无"); if(checked.videoNote) msg+="\n🎬 视频："+checked.videoNote; }
+  alert(msg);
+}
+
+function renderStats(){
+  const plan = PLANS[currentMonthKey];
+  const data = loadMonthData(currentMonthKey);
+  const today = getToday();
+  let total=0, home=0, jazz=0, streak=0;
+  for(const d in data){ if(!data[d]) continue; total++; const info=plan.days[d]; if(info&&info.type==="home") home++; if(info&&info.type==="jazz") jazz++; }
+  if(today.y===plan.year && today.m===plan.month){
+    for(let d=today.d;d>=1;d--){ if(data[String(d)]) streak++; else break; }
+  }
+  document.getElementById("statTotal").textContent=total;
+  document.getElementById("statStreak").textContent=streak;
+  document.getElementById("statHome").textContent=home;
+  document.getElementById("statJazz").textContent=jazz;
+}
+
+function renderTimeline(){
+  const plan = PLANS[currentMonthKey];
+  const data = loadMonthData(currentMonthKey);
+  const list = document.getElementById("timelineList");
+  const keys = Object.keys(data).filter(d=>data[d]).sort((a,b)=>b-a);
+  if(keys.length===0){ list.innerHTML=`<div class="timeline-empty">还没有打卡记录<br>完成第一次训练后，这里会记录你的变化 ✨</div>`; return; }
+  let html="";
+  for(const d of keys){
+    const rec=data[d]; const info=plan.days[d];
+    let typeText = info ? (info.type==="home"?"🏠 居家训练":info.type==="jazz"?"💃 爵士舞课":"☕ 休息日记录") : "记录";
+    html+=`<div class="timeline-item"><div class="tl-date">${plan.month}月${d}日</div><div class="tl-type">${typeText}</div>${rec.feeling?`<div class="tl-feeling">${rec.feeling}</div>`:""}${rec.img?`<img class="tl-img" src="${rec.img}">`:""}${rec.videoNote?`<div class="tl-video">🎬 视频备注：${rec.videoNote}</div>`:""}</div>`;
+  }
+  list.innerHTML=html;
+}
+
+// ==================== 历史记录页 ====================
+function renderHistory(){
+  const bar = document.getElementById("filterBar");
+  const list = document.getElementById("historyList");
+  // 筛选标签
+  let filterHtml=`<div class="filter-chip ${historyFilter==='all'?'active':''}" onclick="setHistoryFilter('all')">全部</div>`;
+  for(const key in PLANS){
+    const plan=PLANS[key];
+    if(plan.status!=="ready") continue;
+    const data=loadMonthData(key);
+    const count=Object.keys(data).filter(d=>data[d]).length;
+    if(count===0) continue;
+    filterHtml+=`<div class="filter-chip ${historyFilter===key?'active':''}" onclick="setHistoryFilter('${key}')">${plan.month}月 (${count})</div>`;
+  }
+  bar.innerHTML=filterHtml;
+
+  // 收集所有打卡记录
+  let allRecords=[];
+  for(const key in PLANS){
+    const plan=PLANS[key];
+    if(plan.status!=="ready") continue;
+    const data=loadMonthData(key);
+    for(const d in data){
+      if(!data[d]) continue;
+      allRecords.push({monthKey:key, year:plan.year, month:plan.month, day:d, rec:data[d], info:plan.days[d]});
+    }
+  }
+  // 筛选
+  if(historyFilter!=="all") allRecords=allRecords.filter(r=>r.monthKey===historyFilter);
+  // 按时间倒序
+  allRecords.sort((a,b)=> (b.year*10000+b.month*100+b.day) - (a.year*10000+a.month*100+a.day));
+
+  if(allRecords.length===0){
+    list.innerHTML=`<div class="timeline-empty">还没有任何打卡记录<br>开始训练后，这里会记录你的每一次进步 ✨</div>`;
+    return;
+  }
+  let html="";
+  for(const r of allRecords){
+    let typeText = r.info ? (r.info.type==="home"?"🏠 居家训练":r.info.type==="jazz"?"💃 爵士舞课":"☕ 休息日记录") : "记录";
+    html+=`<div class="timeline-item"><div class="tl-date">${r.year}年${r.month}月${r.day}日</div><div class="tl-month">${r.monthKey}</div><div class="tl-type">${typeText}</div>${r.rec.feeling?`<div class="tl-feeling">${r.rec.feeling}</div>`:""}${r.rec.img?`<img class="tl-img" src="${r.rec.img}">`:""}${r.rec.videoNote?`<div class="tl-video">🎬 视频备注：${r.rec.videoNote}</div>`:""}</div>`;
+  }
+  list.innerHTML=html;
+}
+
+function setHistoryFilter(f){ historyFilter=f; renderHistory(); }
+
+// ==================== 打卡弹窗 ====================
+function openModal(){
+  const plan = PLANS[currentMonthKey];
+  const today = getToday();
+  if(today.y!==plan.year || today.m!==plan.month){ alert("当前不是本月，不能打卡"); return; }
+  const d=String(today.d);
+  const data=loadMonthData(currentMonthKey);
+  const rec=data[d];
+  document.getElementById("modalTitle").textContent=`${today.m}月${today.d}日 打卡`;
+  document.getElementById("feelingInput").value=rec?(rec.feeling||""):"";
+  document.getElementById("videoNote").value=rec?(rec.videoNote||""):"";
+  currentImgData=rec?(rec.img||null):null;
+  const preview=document.getElementById("imgPreview");
+  if(currentImgData){ document.getElementById("previewImg").src=currentImgData; preview.style.display="block"; }
+  else{ preview.style.display="none"; }
+  document.querySelectorAll(".feeling-quick button").forEach(b=>b.classList.remove("active"));
+  document.getElementById("modalMask").classList.add("show");
+}
+function closeModal(){ document.getElementById("modalMask").classList.remove("show"); }
+function setFeeling(btn,text){
+  document.querySelectorAll(".feeling-quick button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  const input=document.getElementById("feelingInput");
+  if(!input.value) input.value=text; else input.value+="，"+text;
+}
+function handleImg(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const img=new Image();
+    img.onload=function(){
+      const canvas=document.createElement("canvas");
+      let w=img.width,h=img.height; const maxW=1024;
+      if(w>maxW){h=h*maxW/w;w=maxW;}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      currentImgData=canvas.toDataURL("image/jpeg",0.7);
+      document.getElementById("previewImg").src=currentImgData;
+      document.getElementById("imgPreview").style.display="block";
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function removeImg(){
+  currentImgData=null;
+  document.getElementById("imgPreview").style.display="none";
+  document.getElementById("imgInput").value="";
+}
+function saveCheckin(){
+  const today=getToday();
+  const d=String(today.d);
+  const data=loadMonthData(currentMonthKey);
+  data[d]={
+    feeling:document.getElementById("feelingInput").value.trim(),
+    img:currentImgData,
+    videoNote:document.getElementById("videoNote").value.trim(),
+    time:new Date().toISOString()
+  };
+  saveMonthData(currentMonthKey,data);
+  closeModal();
+  renderMonth();
+}
+
+// ==================== 初始化 ====================
+renderHome();
+</script>
+</body>
+</html>
