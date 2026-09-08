@@ -421,7 +421,21 @@ let syncing = false;
 // ==================== 本地存储 ====================
 function storageKey(monthKey){ return "moxue_fitness_" + monthKey.replace("-","_"); }
 function loadMonthData(monthKey){
-  try{ const raw = localStorage.getItem(storageKey(monthKey)); return raw ? JSON.parse(raw) : {}; }
+  try{
+    const raw = localStorage.getItem(storageKey(monthKey));
+    if(!raw) return {};
+    const data = JSON.parse(raw);
+    // 旧数据迁移：单张图片img → 图片数组imgs；视频备注videoNote → 视频链接videoUrl
+    let migrated = false;
+    for(const d in data){
+      const rec = data[d];
+      if(!rec) continue;
+      if(rec.img && !rec.imgs){ rec.imgs = [rec.img]; delete rec.img; migrated = true; }
+      if(rec.videoNote && !rec.videoUrl){ rec.videoUrl = rec.videoNote; delete rec.videoNote; migrated = true; }
+    }
+    if(migrated) saveMonthData(monthKey, data);
+    return data;
+  }
   catch(e){ return {}; }
 }
 function saveMonthData(monthKey, data){
